@@ -26,7 +26,7 @@ module.exports = buildSchema(`
             cityId: Int!
             designationId: Int!
             dob: Int!
-            password: String
+            password: String!
         }
 
         type Designation {
@@ -37,21 +37,23 @@ module.exports = buildSchema(`
 
         type ResetPassword {
             id: ID!
-            secretKey: Int!
+            secretKey: String!
             userId: String!
-            expiresAt: String!
         }
 
         type AuthData {
-            userId: ID!
-            token: String!
-            tokenExpiration: Int!
+            userId: ID
+            token: String
+            refreshToken: String
+            message: String
+            code: Int
         }
 
         type ResetPassRes {
             isMatched: Boolean!
             status: String!
             isPasswordChanged: Boolean!
+            code: Int!
         }
 
         input UserInput {
@@ -78,6 +80,7 @@ module.exports = buildSchema(`
             createUser(userInput: UserInput): User 
             checkSecretKey(secretKey: Int!): ResetPassRes
             resetPassword(secretKey: Int!, password: String!): ResetPassRes
+            getAccessToken: AuthData
         }
         schema {
             query: RootQuery
