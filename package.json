@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon --exec NODE_ENV=development node app.js"
+    "start": "NODE_ENV=development node app.js"
   },
   "engines": {
     "node": "12.x"
@@ -22,8 +22,5 @@
     "graphql": "^15.0.0",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.9.16"
-  },
-  "devDependencies": {
-    "nodemon": "^2.0.4"
   }
 }
