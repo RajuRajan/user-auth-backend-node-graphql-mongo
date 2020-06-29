@@ -38,7 +38,7 @@ module.exports = buildSchema(`
         type ResetPassword {
             id: ID!
             secretKey: String!
-            userId: String!
+            email: String!
         }
 
         type AuthData {
@@ -78,8 +78,8 @@ module.exports = buildSchema(`
 
         type RootMutation {
             createUser(userInput: UserInput): User 
-            checkSecretKey(secretKey: Int!): ResetPassRes
-            resetPassword(secretKey: Int!, password: String!): ResetPassRes
+            checkSecretKey(secretKey: Int!, email: String!): ResetPassRes
+            resetPassword(secretKey: Int!, password: String!, email: String!): ResetPassRes
             getAccessToken: AuthData
         }
         schema {

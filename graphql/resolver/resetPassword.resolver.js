@@ -5,20 +5,16 @@ const jwt = require("jsonwebtoken")
 const userHelper  = require("../_helpers/user.helper")
 
 module.exports = {
-    forgotPassword: async (args,req) => {
-        const {userId ,isAuth} = req
-        if(!isAuth){
-            throw new Error("UNAUTHORIZED")
-        }
+    forgotPassword: async (args) => {
         try { 
             // TokenExpired is checked if db alreaddy contains expiredtoken of restpassword
-            const TokenExpired = await ResetPassword.findOne({userId})
+            const TokenExpired = await ResetPassword.findOne({email: args.email})
             //if token expired then particular users old token details deleted
                 try{
                   var isTokenNotExpired = TokenExpired && jwt.verify(TokenExpired.secretKey, 'secret')
                 }
                 catch {
-                    const DeleteTokenExpired = await ResetPassword.deleteOne({userId})
+                    const DeleteTokenExpired = await ResetPassword.deleteOne({email: args.email})
                 }
             //if token Not expired then it insists to use the same secret key from the mail
             if(TokenExpired && isTokenNotExpired){
@@ -30,7 +26,12 @@ module.exports = {
                 expiresIn: "300000ms" //for 5min
             })
 
-            ResetPassword.create({ userId, secretKey: randomKeyToken})
+            const isUserExists = await User.findOne({email:args.email})
+            if(!isUserExists){
+                throw new Error('Email Not registered');
+            }
+
+            ResetPassword.create({ email: args.email, secretKey: randomKeyToken})
             .then(userHelper.sendMail(args.email,randomKey))
 
             return {status:"Mailed", code:200}
@@ -39,12 +40,9 @@ module.exports = {
             throw new Error(err.message)
         }
     },
-    checkSecretKey: async(args ,req) => {
-        if(!req.isAuth){
-            throw new Error("UNAUTHORIZED")
-        }
+    checkSecretKey: async(args) => {
         try {
-            const reset = await ResetPassword.findOne({userId: req.userId})
+            const reset = await ResetPassword.findOne({email: args.email})
             try{
                 var decodedToken = jwt.verify(reset.secretKey, 'secret')
                 if(decodedToken.key === args.secretKey){
@@ -52,23 +50,20 @@ module.exports = {
                 }
             }
             catch {
-                return {status:"TIMEOUT", isMatched:false, code:200}
+                return {status:"CHECK SECRET KEY AND MAIL ID", isMatched:false, code:200}
             }
         } catch (err) {
             throw new Error(err.message)
         }
     },
-    resetPassword: async(args,req) => {
-        if(!req.isAuth){
-            throw new Error("UNAUTHORIZED")
-        }
+    resetPassword: async(args) => {
         try { 
-            const reset = await ResetPassword.findOne({userId: req.userId})
+            const reset = await ResetPassword.findOne({email: args.email})
             try{
                 var decodedToken = jwt.verify(reset.secretKey, 'secret')
                 
                 if(decodedToken && decodedToken.key === args.secretKey){
-                    const filter = { _id: req.userId };
+                    const filter = { email: args.email };
                     const hashedPass = await bcrypt.hash(args.password ,12);
 
                     const update = { password: hashedPass};
@@ -76,7 +71,7 @@ module.exports = {
                     return {status:"PASSWORD CHANGED", isMatched: true, isPasswordChanged: true,code:200}
                 }
              } catch {
-                 return {status:"TIMEOUT", isMatched: false, isPasswordChanged: false, code:200}
+                 return {status:"CHECK SECRET KEY AND MAIL ID", isMatched: false, isPasswordChanged: false, code:200}
              }
         } catch (err) {
             throw new Error(err.message)
