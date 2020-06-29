@@ -1,4 +1,5 @@
 const User = require("../../models/user")
+const UserHelper = require("../_helpers/user.helper")
 const bcrypt = require('bcryptjs')
 const jwt = require("jsonwebtoken")
 
@@ -42,16 +43,19 @@ module.exports = {
         try{
             const user = await User.findOne({email})
             if(!user){
-                throw new Error("User Not Found")
+                return {message: "User Not Found", code: 402}
             }
             const isEqual = await bcrypt.compare(password, user.password)
             if(!isEqual){
-                throw new Error("Password Incorrect")
+                return {message: "Password Incorrect", code: 402}
             }
             const token = jwt.sign({userId: user.id, email: user.email}, 'secret',{
                 expiresIn: "1h"
             })
-            return {userId: user.id, token, tokenExpiration: 1}
+            const refreshToken = jwt.sign({userId: user.id, email: user.email}, 'refreshToken')
+            UserHelper.setAuth(user.id, token, refreshToken)
+
+            return {userId: user.id, token, refreshToken}
         } catch (err){
             throw err;
         }
